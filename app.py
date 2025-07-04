@@ -5,18 +5,39 @@ import pandas as pd
 from flask import Flask, render_template, request
 
 
+import requests
+import os
+
 def download_model_from_drive():
     MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
     MODEL_PATH = "fraud_model.pkl"
-    if not os.path.exists(MODEL_PATH):
-        print("Downloading fraud_model.pkl from Google Drive...")
-        URL = f"https://drive.google.com/uc?export=download&id={MODEL_ID}"
-        response = requests.get(URL)
-        with open(MODEL_PATH, "wb") as f:
-            f.write(response.content)
-        print("Download complete.")
+    URL = f"https://drive.google.com/uc?export=download&id={MODEL_ID}"
 
-download_model_from_drive()
+    if os.path.exists(MODEL_PATH):
+        return
+
+    print("Downloading model from Google Drive...")
+
+    session = requests.Session()
+    response = session.get(URL, stream=True)
+    
+    def get_confirm_token(response):
+        for key, value in response.cookies.items():
+            if key.startswith("download_warning"):
+                return value
+        return None
+
+    token = get_confirm_token(response)
+    if token:
+        params = {'id': MODEL_ID, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    with open(MODEL_PATH, "wb") as f:
+        for chunk in response.iter_content(32768):
+            if chunk:
+                f.write(chunk)
+
+    print("Model download complete.")
 
 with open('fraud_model.pkl', 'rb') as f:
     model = pickle.load(f)
