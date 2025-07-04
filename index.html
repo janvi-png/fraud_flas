@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fraud Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <!DOCTYPE html>
+<html>
+<head>
+    <title>Fraud Detection</title>
+    <style>
+        /* Base Reset */
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+    
+        body {
+          font-family: 'Orbitron', sans-serif;
+          background: url('https://atmeye.com/wp-content/uploads/2022/08/ATM-Card-Fraud-scaled.jpg') no-repeat center center fixed;
+          background-size: cover;
+          color: #2a2828;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 50px 20px;
+          min-height: 100vh;
+        }
+    
+        h1 {
+          font-size: 3em;
+          margin-bottom: 30px;
+          text-shadow: 0 0 10px #199288, 0 0 20px #6954bc;
+        }
+    
+        form {
+          background: rgba(0, 0, 0, 0.7);
+          border: 2px solid #753025;
+          border-radius: 15px;
+          padding: 30px;
+          width: 100%;
+          max-width: 600px;
+          box-shadow: 0 0 20px #45666329;
+          backdrop-filter: blur(10px);
+        }
+    
+        label {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+          color: #33ff006b;
+        }
+    
+        input[type="text"] {
+          width: 100%;
+          padding: 10px;
+          margin-bottom: 15px;
+          border: none;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.1);
+          color: #00ffea3f;
+          box-shadow: inset 0 0 10px #6c9d99;
+        }
+    
+        input[type="text"]:focus {
+          outline: none;
+          background: rgba(0, 255, 234, 0.2);
+          box-shadow: 0 0 10px #c7e5e3, 0 0 20px #bdc5c4;
+        }
+    
+        button {
+          width: 100%;
+          padding: 12px;
+          border: none;
+          border-radius: 8px;
+          background-color: #1a887f;
+          color: #0000007c;
+          font-weight: bold;
+          cursor: pointer;
+          transition: background-color 0.3s ease, transform 0.3s;
+        }
+    
+        button:hover {
+          background-color: #35a09032;
+          transform: scale(1.05);
+        }
+    
+        .result, .inputs {
+          margin-top: 40px;
+          background: rgba(241, 231, 231, 0.7);
+          border: 2px solid #b700ff;
+          border-radius: 12px;
+          padding: 25px;
+          width: 100%;
+          max-width: 600px;
+          box-shadow: 0 0 20px #aed4d1;
+          backdrop-filter: blur(10px);
+        }
+    
+        .inputs h3 {
+          margin-bottom: 15px;
+        }
+    
+        .inputs ul {
+          list-style: none;
+          padding: 0;
+        }
+    
+        .inputs li {
+          padding: 12px 18px;
+          margin-bottom: 10px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 50px;
+          transition: all 0.3s ease;
+          box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+    
+        .inputs li:hover {
+          background: rgba(0, 255, 234, 0.2);
+          box-shadow: 0 0 20px #9fbfbc, 0 0 30px #e18686db;
+          transform: scale(1.02);
+        }
+    
+        @media screen and (max-width: 600px) {
+          h1 {
+            font-size: 2em;
+          }
+        }
+      </style>
+
+
+     
+  
+</head>
+<body>
+    <h1>Bank Fraud Detection System</h1>
+    <form method="POST">
+        {% for feature in features %}
+            <label>{{ feature }}:</label><br>
+            <input type="text" name="{{ feature }}" required><br>
+        {% endfor %}
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if result %}
+        <div class="result">
+            <p><strong>Prediction:</strong> {{ result }}</p>
+            <p><strong>Confidence:</strong> {{ probability }}</p>
+        </div>
+    {% endif %}
+</body>
+{% if inputs %}
+    <div class="result">
+        <h3>User Inputs</h3>
+        <ul>
+        {% for key, val in inputs.items() %}
+            <li><strong>{{ key }}:</strong> {{ val }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+</html>

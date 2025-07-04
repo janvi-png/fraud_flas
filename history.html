@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>History</title></head>
+<body>
+<h2>All Past Predictions</h2>
+<table border="1">
+<tr>
+  {% for key in logs[0].keys() %}<th>{{ key }}</th>{% endfor %}
+</tr>
+{% for row in logs %}
+<tr>
+  {% for value in row.values() %}<td>{{ value }}</td>{% endfor %}
+</tr>
+{% endfor %}
+</table>
+<a href="/">Back to Home</a>
+</body>
+</html>
