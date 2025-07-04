@@ -6,6 +6,7 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
+
 def download_model_from_drive():
     MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
     MODEL_PATH = "fraud_model.pkl"
@@ -18,7 +19,7 @@ def download_model_from_drive():
 
     session = requests.Session()
     response = session.get(URL, stream=True)
-    
+
     def get_confirm_token(response):
         for key, value in response.cookies.items():
             if key.startswith("download_warning"):
@@ -41,28 +42,27 @@ def download_model_from_drive():
 download_model_from_drive()
 
 
-model = None
-feature_names = None
-encoders = None
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global model, feature_names, encoders
     result = None
     probability = None
     inputs = {}
 
+  
+    try:
+        with open('fraud_model.pkl', 'rb') as f:
+            model = pickle.load(f)
+
+        with open('features.pkl', 'rb') as f:
+            feature_names = pickle.load(f)
+
+        with open('encoders.pkl', 'rb') as f:
+            encoders = pickle.load(f)
+    except Exception as e:
+        return f"Critical Error: {e}"
+
     if request.method == 'POST':
         try:
-            
-            if model is None:
-                with open('fraud_model.pkl', 'rb') as f:
-                    model = pickle.load(f)
-                with open('features.pkl', 'rb') as f:
-                    feature_names = pickle.load(f)
-                with open('encoders.pkl', 'rb') as f:
-                    encoders = pickle.load(f)
-
             input_values = []
             for feature in feature_names:
                 val = request.form.get(feature)
@@ -85,7 +85,7 @@ def index():
             probability = "N/A"
 
     return render_template('index.html', result=result, probability=probability,
-                           features=feature_names or [], inputs=inputs)
+                           features=feature_names, inputs=inputs)
 
 if __name__ == '__main__':
     app.run(debug=True)
