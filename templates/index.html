@@ -136,12 +136,26 @@
 <body>
     <h1>Bank Fraud Detection System</h1>
     <form method="POST">
-        {% for feature in features %}
-            <label>{{ feature }}:</label><br>
-            <input type="text" name="{{ feature }}" required><br>
-        {% endfor %}
-        <button type="submit">Predict</button>
-    </form>
+    {% for feature in features %}
+        <label>{{ feature }}:</label><br>
+
+        {% if dropdowns.get(feature) %}
+            <select name="{{ feature }}" required>
+                <option value="">Select {{ feature }}</option>
+                {% for option in dropdowns[feature] %}
+                    <option value="{{ option }}" {% if inputs.get(feature) == option %}selected{% endif %}>
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+        {% else %}
+            <input type="text" name="{{ feature }}" value="{{ inputs.get(feature, '') }}" required>
+        {% endif %}
+        <br><br>
+    {% endfor %}
+    
+    <button type="submit">Predict</button>
+</form>
 
     {% if result %}
         <div class="result">
