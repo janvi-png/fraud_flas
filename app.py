@@ -4,9 +4,7 @@ import pickle
 import pandas as pd
 from flask import Flask, render_template, request
 
-
-import requests
-import os
+app = Flask(__name__)
 
 def download_model_from_drive():
     MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
@@ -39,30 +37,36 @@ def download_model_from_drive():
 
     print("Model download complete.")
 
-with open('fraud_model.pkl', 'rb') as f:
-    model = pickle.load(f)
 
-with open('features.pkl', 'rb') as f:
-    feature_names = pickle.load(f)
+download_model_from_drive()
 
-with open('encoders.pkl', 'rb') as f:
-    encoders = pickle.load(f)
 
-app = Flask(__name__)
+model = None
+feature_names = None
+encoders = None
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global model, feature_names, encoders
     result = None
     probability = None
     inputs = {}
 
-
     if request.method == 'POST':
         try:
+            
+            if model is None:
+                with open('fraud_model.pkl', 'rb') as f:
+                    model = pickle.load(f)
+                with open('features.pkl', 'rb') as f:
+                    feature_names = pickle.load(f)
+                with open('encoders.pkl', 'rb') as f:
+                    encoders = pickle.load(f)
+
             input_values = []
             for feature in feature_names:
                 val = request.form.get(feature)
-                inputs[feature] = val  
+                inputs[feature] = val
                 if feature in encoders:
                     val = encoders[feature].transform([val])[0]
                 else:
@@ -75,13 +79,13 @@ def index():
 
             result = 'Fraudulent' if pred == 1 else 'Legitimate'
             probability = f"{prob * 100:.2f}%"
+
         except Exception as e:
             result = f"Error: {str(e)}"
             probability = "N/A"
 
-
     return render_template('index.html', result=result, probability=probability,
-                           features=feature_names, inputs=inputs)
+                           features=feature_names or [], inputs=inputs)
 
 if __name__ == '__main__':
     app.run(debug=True)
