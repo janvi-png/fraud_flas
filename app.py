@@ -1,44 +1,34 @@
 import os
-import requests
 import pickle
+import requests
 import pandas as pd
 from flask import Flask, render_template, request
 
+app = Flask(__name__)
 
-def download_model_from_drive():
-    MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
-    MODEL_PATH = "fraud_model.pkl"
-    URL = f"https://drive.google.com/uc?export=download&id={MODEL_ID}"
-
-    if os.path.exists(MODEL_PATH):
-        return
-
-    print("Downloading model from Google Drive...")
-    session = requests.Session()
-    response = session.get(URL, stream=True)
-
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith("download_warning"):
-                return value
-        return None
-
-    token = get_confirm_token(response)
-    if token:
-        params = {'id': MODEL_ID, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    with open(MODEL_PATH, "wb") as f:
-        for chunk in response.iter_content(32768):
-            if chunk:
-                f.write(chunk)
-
-    print("Model download complete.")
+def download_file_from_github(url, filename):
+    if not os.path.exists(filename):
+        print(f"Downloading {filename}...")
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+        else:
+            raise Exception(f"Failed to download {filename} from GitHub")
 
 
-download_model_from_drive()
+GITHUB_RAW_BASE = "https://raw.githubusercontent.com/janvi-png/fraud_flas/main/"
 
-# Load everything
+files_to_download = {
+    "fraud_model.pkl": GITHUB_RAW_BASE + "fraud_model.pkl",
+    "features.pkl": GITHUB_RAW_BASE + "features.pkl",
+    "encoders.pkl": GITHUB_RAW_BASE + "encoders.pkl",
+}
+
+for filename, url in files_to_download.items():
+    download_file_from_github(url, filename)
+
+# Load the files
 with open('fraud_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
