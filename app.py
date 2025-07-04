@@ -1,8 +1,23 @@
-from flask import Flask, render_template, request
+import os
+import requests
 import pickle
 import pandas as pd
+from flask import Flask, render_template, request
 
-# Load model and files
+
+def download_model_from_drive():
+    MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
+    MODEL_PATH = "fraud_model.pkl"
+    if not os.path.exists(MODEL_PATH):
+        print("Downloading fraud_model.pkl from Google Drive...")
+        URL = f"https://drive.google.com/uc?export=download&id={MODEL_ID}"
+        response = requests.get(URL)
+        with open(MODEL_PATH, "wb") as f:
+            f.write(response.content)
+        print("Download complete.")
+
+download_model_from_drive()
+
 with open('fraud_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
