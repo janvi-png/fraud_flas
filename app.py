@@ -4,8 +4,6 @@ import pickle
 import pandas as pd
 from flask import Flask, render_template, request
 
-app = Flask(__name__)
-
 
 def download_model_from_drive():
     MODEL_ID = "141CR3weueVcHV41Jf3SFnLWpzqLv8E41"
@@ -16,7 +14,6 @@ def download_model_from_drive():
         return
 
     print("Downloading model from Google Drive...")
-
     session = requests.Session()
     response = session.get(URL, stream=True)
 
@@ -41,25 +38,27 @@ def download_model_from_drive():
 
 download_model_from_drive()
 
+# Load everything
+with open('fraud_model.pkl', 'rb') as f:
+    model = pickle.load(f)
+
+with open('features.pkl', 'rb') as f:
+    feature_names = pickle.load(f)
+
+with open('encoders.pkl', 'rb') as f:
+    encoders = pickle.load(f)
+
+dropdown_fields = {}
+for feature, encoder in encoders.items():
+    dropdown_fields[feature] = list(encoder.classes_)
+
+app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     result = None
     probability = None
     inputs = {}
-
-  
-    try:
-        with open('fraud_model.pkl', 'rb') as f:
-            model = pickle.load(f)
-
-        with open('features.pkl', 'rb') as f:
-            feature_names = pickle.load(f)
-
-        with open('encoders.pkl', 'rb') as f:
-            encoders = pickle.load(f)
-    except Exception as e:
-        return f"Critical Error: {e}"
 
     if request.method == 'POST':
         try:
@@ -79,13 +78,12 @@ def index():
 
             result = 'Fraudulent' if pred == 1 else 'Legitimate'
             probability = f"{prob * 100:.2f}%"
-
         except Exception as e:
             result = f"Error: {str(e)}"
             probability = "N/A"
 
-    return render_template('index.html', result=result, probability=probability,
-                           features=feature_names, inputs=inputs)
+    return render_template("index.html", result=result, probability=probability,
+                           features=feature_names, inputs=inputs, dropdowns=dropdown_fields)
 
 if __name__ == '__main__':
     app.run(debug=True)
