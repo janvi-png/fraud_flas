@@ -1,13 +1,8 @@
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Fraud Detection</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
-    <!DOCTYPE html>
-<html>
-<head>
-    <title>Fraud Detection</title>
     <style>
         /* Base Reset */
         * {
@@ -15,7 +10,7 @@
           padding: 0;
           box-sizing: border-box;
         }
-    
+
         body {
           font-family: 'Orbitron', sans-serif;
           background: url('https://atmeye.com/wp-content/uploads/2022/08/ATM-Card-Fraud-scaled.jpg') no-repeat center center fixed;
@@ -27,13 +22,31 @@
           padding: 50px 20px;
           min-height: 100vh;
         }
-    
+
         h1 {
           font-size: 3em;
           margin-bottom: 30px;
           text-shadow: 0 0 10px #199288, 0 0 20px #6954bc;
         }
-    
+
+        a.button-link {
+          display: inline-block;
+          margin-bottom: 30px;
+          padding: 10px 20px;
+          background-color: #1a887f;
+          color: white;
+          text-decoration: none;
+          font-weight: bold;
+          border-radius: 8px;
+          transition: background-color 0.3s ease, transform 0.3s;
+          box-shadow: 0 0 10px rgba(0, 255, 234, 0.6);
+        }
+
+        a.button-link:hover {
+          background-color: #35a090;
+          transform: scale(1.05);
+        }
+
         form {
           background: rgba(0, 0, 0, 0.7);
           border: 2px solid #753025;
@@ -44,31 +57,41 @@
           box-shadow: 0 0 20px #45666329;
           backdrop-filter: blur(10px);
         }
-    
+
         label {
           display: block;
           margin-bottom: 5px;
           font-weight: bold;
           color: #33ff006b;
         }
-    
-        input[type="text"] {
+
+        input[type="text"],
+        select {
           width: 100%;
           padding: 10px;
           margin-bottom: 15px;
           border: none;
           border-radius: 8px;
           background: rgba(255, 255, 255, 0.1);
-          color: #00ffea3f;
+          color: #00ffea;
           box-shadow: inset 0 0 10px #6c9d99;
+          font-family: 'Orbitron', sans-serif;
+          font-size: 1em;
+          transition: box-shadow 0.3s, background 0.3s;
         }
-    
-        input[type="text"]:focus {
+
+        input[type="text"]:focus,
+        select:focus {
           outline: none;
           background: rgba(0, 255, 234, 0.2);
           box-shadow: 0 0 10px #c7e5e3, 0 0 20px #bdc5c4;
         }
-    
+
+        select option {
+          background-color: #111;
+          color: #00ffea;
+        }
+
         button {
           width: 100%;
           padding: 12px;
@@ -80,13 +103,13 @@
           cursor: pointer;
           transition: background-color 0.3s ease, transform 0.3s;
         }
-    
+
         button:hover {
           background-color: #35a09032;
           transform: scale(1.05);
         }
-    
-        .result, .inputs {
+
+        .result {
           margin-top: 40px;
           background: rgba(241, 231, 231, 0.7);
           border: 2px solid #b700ff;
@@ -97,16 +120,28 @@
           box-shadow: 0 0 20px #aed4d1;
           backdrop-filter: blur(10px);
         }
-    
+
+        .inputs {
+          margin-top: 20px;
+          background: rgba(241, 231, 231, 0.7);
+          border: 2px solid #3e17a0;
+          border-radius: 12px;
+          padding: 20px;
+          width: 100%;
+          max-width: 600px;
+          box-shadow: 0 0 20px #c2c2c2;
+          backdrop-filter: blur(10px);
+        }
+
         .inputs h3 {
           margin-bottom: 15px;
         }
-    
+
         .inputs ul {
           list-style: none;
           padding: 0;
         }
-    
+
         .inputs li {
           padding: 12px 18px;
           margin-bottom: 10px;
@@ -115,47 +150,45 @@
           transition: all 0.3s ease;
           box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         }
-    
+
         .inputs li:hover {
           background: rgba(0, 255, 234, 0.2);
           box-shadow: 0 0 20px #9fbfbc, 0 0 30px #e18686db;
           transform: scale(1.02);
         }
-    
+
         @media screen and (max-width: 600px) {
           h1 {
             font-size: 2em;
           }
         }
-      </style>
-
-
-     
-  
+    </style>
 </head>
 <body>
     <h1>Bank Fraud Detection System</h1>
-    <form method="POST">
-    {% for feature in features %}
-        <label>{{ feature }}:</label><br>
 
-        {% if dropdowns.get(feature) %}
-            <select name="{{ feature }}" required>
-                <option value="">Select {{ feature }}</option>
-                {% for option in dropdowns[feature] %}
-                    <option value="{{ option }}" {% if inputs.get(feature) == option %}selected{% endif %}>
-                        {{ option }}
-                    </option>
-                {% endfor %}
-            </select>
-        {% else %}
-            <input type="text" name="{{ feature }}" value="{{ inputs.get(feature, '') }}" required>
-        {% endif %}
-        <br><br>
-    {% endfor %}
-    
-    <button type="submit">Predict</button>
-</form>
+    <a class="button-link" href="{{ url_for('history') }}">
+        View Past Predictions
+    </a>
+
+    <form method="POST">
+        {% for feature in features %}
+            <label>{{ feature }}:</label><br>
+            {% if dropdowns.get(feature) %}
+                <select name="{{ feature }}" required>
+                    <option value="">Select {{ feature }}</option>
+                    {% for option in dropdowns[feature] %}
+                        <option value="{{ option }}" {% if inputs.get(feature) == option %}selected{% endif %}>
+                            {{ option }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% else %}
+                <input type="text" name="{{ feature }}" value="{{ inputs.get(feature, '') }}" required>
+            {% endif %}
+        {% endfor %}
+        <button type="submit">Predict</button>
+    </form>
 
     {% if result %}
         <div class="result">
@@ -163,15 +196,16 @@
             <p><strong>Confidence:</strong> {{ probability }}</p>
         </div>
     {% endif %}
+
+    {% if inputs %}
+        <div class="inputs">
+            <h3>User Inputs</h3>
+            <ul>
+            {% for key, val in inputs.items() %}
+                <li><strong>{{ key }}:</strong> {{ val }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
 </body>
-{% if inputs %}
-    <div class="result">
-        <h3>User Inputs</h3>
-        <ul>
-        {% for key, val in inputs.items() %}
-            <li><strong>{{ key }}:</strong> {{ val }}</li>
-        {% endfor %}
-        </ul>
-    </div>
-{% endif %}
 </html>
