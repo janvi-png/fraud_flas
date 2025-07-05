@@ -1,19 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Past Predictions</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+</head>
+<body class="container py-4">
+  <h2 class="mb-3">Prediction History</h2>
 
-<!DOCTYPE html>
-<html>
-<head><title>History</title></head>
-<body>
-<h2>All Past Predictions</h2>
-<table border="1">
-<tr>
-  {% for key in logs[0].keys() %}<th>{{ key }}</th>{% endfor %}
-</tr>
-{% for row in logs %}
-<tr>
-  {% for value in row.values() %}<td>{{ value }}</td>{% endfor %}
-</tr>
-{% endfor %}
-</table>
-<a href="/">Back to Home</a>
+  <table class="table table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Date &amp; Time</th>
+        <th>Input (dict)</th>
+        <th>Prediction</th>
+        <th>Confidence</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in logs %}
+      <tr>
+        <td>{{ row.ts }}</td>
+        <td><code>{{ row.payload }}</code></td>
+        <td>{{ row.prediction }}</td>
+        <td>{{ row.prob }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <a class="btn btn-secondary" href="{{ url_for('index') }}">&larr; Back</a>
 </body>
 </html>
