@@ -1,79 +1,126 @@
 import os
 import pickle
-import requests
+import sqlite3
+from datetime import datetime
+
 import pandas as pd
+import requests
 from flask import Flask, render_template, request
 
-app = Flask(__name__)
 
-def download_file_from_github(url, filename):
-    if not os.path.exists(filename):
-        print(f"Downloading {filename}...")
-        response = requests.get(url)
-        if response.status_code == 200:
-            with open(filename, 'wb') as f:
-                f.write(response.content)
-        else:
-            raise Exception(f"Failed to download {filename} from GitHub")
-
-
-GITHUB_RAW_BASE = "https://raw.githubusercontent.com/janvi-png/fraud_flas/main/"
-
-files_to_download = {
-    "fraud_model.pkl": GITHUB_RAW_BASE + "fraud_model.pkl",
-    "features.pkl": GITHUB_RAW_BASE + "features.pkl",
-    "encoders.pkl": GITHUB_RAW_BASE + "encoders.pkl",
+GITHUB_RAW = "https://raw.githubusercontent.com/janvi-png/fraud_flas/main/"
+FILES = {
+    "fraud_model.pkl": GITHUB_RAW + "fraud_model.pkl",
+    "features.pkl":    GITHUB_RAW + "features.pkl",
+    "encoders.pkl":    GITHUB_RAW + "encoders.pkl",
 }
 
-for filename, url in files_to_download.items():
-    download_file_from_github(url, filename)
+def download_once(url, fname):
+    if os.path.exists(fname):
+        return
+    print(f"→ downloading {fname} …")
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    with open(fname, "wb") as f:
+        f.write(r.content)
 
-# Load the files
-with open('fraud_model.pkl', 'rb') as f:
+for f, u in FILES.items():
+    download_once(u, f)
+
+with open("fraud_model.pkl", "rb") as f:
     model = pickle.load(f)
+with open("features.pkl", "rb") as f:
+    FEATURES = pickle.load(f)
+with open("encoders.pkl", "rb") as f:
+    ENCODERS = pickle.load(f)
 
-with open('features.pkl', 'rb') as f:
-    feature_names = pickle.load(f)
-
-with open('encoders.pkl', 'rb') as f:
-    encoders = pickle.load(f)
-
-dropdown_fields = {}
-for feature, encoder in encoders.items():
-    dropdown_fields[feature] = list(encoder.classes_)
+# build list-of-choices for every categorical feature
+DROPDOWNS = {k: list(enc.classes_) for k, enc in ENCODERS.items()}
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST'])
+
+def init_db():
+    con = sqlite3.connect("history.db")
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS history (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts          TEXT,
+            payload     TEXT,
+            prediction  INTEGER,
+            probability REAL
+        )
+        """
+    )
+    con.close()
+
+init_db()
+
+def log_prediction(payload: dict, pred: int, prob: float) -> None:
+    con = sqlite3.connect("history.db")
+    con.execute(
+        "INSERT INTO history (ts, payload, prediction, probability) VALUES (?, ?, ?, ?)",
+        (datetime.now().isoformat(timespec="seconds"), str(payload), pred, prob),
+    )
+    con.commit()
+    con.close()
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    result = None
-    probability = None
-    inputs = {}
-
-    if request.method == 'POST':
+    result, probability = None, None
+    user_inputs = {}
+    if request.method == "POST":
         try:
-            input_values = []
-            for feature in feature_names:
-                val = request.form.get(feature)
-                inputs[feature] = val
-                if feature in encoders:
-                    val = encoders[feature].transform([val])[0]
+            values = []
+            for feat in FEATURES:
+                raw = request.form.get(feat)
+                user_inputs[feat] = raw
+                if feat in ENCODERS:
+                    raw = ENCODERS[feat].transform([raw])[0]
                 else:
-                    val = float(val)
-                input_values.append(val)
+                    raw = float(raw)
+                values.append(raw)
 
-            df_input = pd.DataFrame([input_values], columns=feature_names)
-            pred = model.predict(df_input)[0]
-            prob = model.predict_proba(df_input)[0][int(pred)]
+            df = pd.DataFrame([values], columns=FEATURES)
+            pred = int(model.predict(df)[0])
+            prob = float(model.predict_proba(df)[0][pred])
 
-            result = 'Fraudulent' if pred == 1 else 'Legitimate'
-            probability = f"{prob * 100:.2f}%"
+            result = "Fraudulent" if pred == 1 else "Legitimate"
+            probability = f"{prob*100:.2f}%"
+
+            # NEW: persist the call
+            log_prediction(user_inputs, pred, prob)
         except Exception as e:
-            result = f"Error: {str(e)}"
-            probability = "N/A"
+            result, probability = f"❌ {e}", "N/A"
 
-    return render_template("index.html", result=result, probability=probability,
-                           features=feature_names, inputs=inputs, dropdowns=dropdown_fields)
+    return render_template(
+        "index.html",
+        result=result,
+        probability=probability,
+        inputs=user_inputs,
+        features=FEATURES,
+        dropdowns=DROPDOWNS,
+    )
 
-if __name__ == '__main__':
+@app.route("/history")
+def history():
+    con = sqlite3.connect("history.db")
+    rows = con.execute(
+        "SELECT ts, payload, prediction, probability FROM history ORDER BY id DESC"
+    ).fetchall()
+    con.close()
+
+    logs = [
+        {
+            "ts": r[0],
+            "payload": r[1],
+            "prediction": "Fraud" if r[2] == 1 else "Legit",
+            "prob": f"{r[3]*100:.2f}%",
+        }
+        for r in rows
+    ]
+    return render_template("history.html", logs=logs)
+
+if __name__ == "__main__":
     app.run(debug=True)
