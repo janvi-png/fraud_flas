@@ -23,11 +23,32 @@
           min-height: 100vh;
         }
 
-        h1 {
-          font-size: 3em;
-          margin-bottom: 30px;
-          text-shadow: 0 0 10px #199288, 0 0 20px #6954bc;
-        }
+       h1 {
+  font-size: 3.5em;
+  margin-bottom: 30px;
+  text-align: center;
+  color: #00fff2;
+  text-shadow:
+    0 0 5px #00fff2,
+    0 0 10px #00c2ba,
+    0 0 20px #009f94,
+    0 0 30px #008a80;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%   { text-shadow: 0 0 5px #00fff2, 0 0 10px #00c2ba; }
+  50%  { text-shadow: 0 0 20px #00fff2, 0 0 30px #00c2ba, 0 0 40px #00c2ba; }
+  100% { text-shadow: 0 0 5px #00fff2, 0 0 10px #00c2ba; }
+}
+<p style="
+  font-size: 1.2em;
+  color: #00ffe1c7;
+  text-shadow: 0 0 5px #00ffe1;
+  margin-bottom: 20px;
+">
+  Predict. Detect. Protect.
+</p>
+
 
         a.button-link {
           display: inline-block;
